@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interaktywny układ pierwiastków</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            text-align: center;
+        }
+
+        h1 {
+            background-color: green;
+            color: white;
+            padding: 10px;
+            margin: 0 auto 20px;
+            width: 90%;
+        }
+
+        #periodic-table {
+            display: grid;
+            grid-template-columns: repeat(8, 1fr); /* 8 kolumn w każdym wierszu */
+            gap: 10px;
+            max-width: 90%;
+            margin: 0 auto;
+            background-color: #e0f0ff;
+            padding: 20px;
+            border-radius: 10px;
+        }
+
+        .element {
+            background-color: #4a90e2;
+            color: white;
+            padding: 15px 10px;
+            border-radius: 5px;
+            text-align: center;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        #question-modal {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: white;
+            padding: 20px;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
+            border-radius: 8px;
+            width: 300px;
+        }
+
+        #question-modal label {
+            display: block;
+            margin: 10px 0;
+            font-size: 18px;
+        }
+
+        #feedback {
+            margin-top: 10px;
+            font-weight: bold;
+        }
+
+        button {
+            margin-top: 10px;
+            padding: 10px 20px;
+            background-color: #4a90e2;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #357ab7;
+        }
+    </style>
+</head>
+<body>
+    <h1>Interaktywny układ pierwiastków</h1>
+    <div id="periodic-table"></div>
+
+    <!-- Modal z pytaniem -->
+    <div id="question-modal">
+        <p id="question-text"></p>
+        <form id="answer-form">
+            <label>
+                <input type="radio" name="answer" value="Tak"> Tak
+            </label>
+            <label>
+                <input type="radio" name="answer" value="Nie"> Nie
+            </label>
+            <div id="feedback"></div>
+            <button type="button" onclick="submitAnswer()">Sprawdź</button>
+            <button type="button" onclick="closeModal()">Zamknij</button>
+        </form>
+    </div>
+
+    <script>
+        const elements = [
+            { symbol: 'H', name: 'Wodór' }, { symbol: 'He', name: 'Hel' }, { symbol: 'Li', name: 'Lit' },
+            { symbol: 'Be', name: 'Beryl' }, { symbol: 'B', name: 'Bor' }, { symbol: 'C', name: 'Węgiel' },
+            { symbol: 'N', name: 'Azot' }, { symbol: 'O', name: 'Tlen' }, { symbol: 'F', name: 'Fluor' },
+            { symbol: 'Ne', name: 'Neon' }, { symbol: 'Na', name: 'Sód' }, { symbol: 'Mg', name: 'Magnez' },
+            { symbol: 'Al', name: 'Glin' }, { symbol: 'Si', name: 'Krzem' }, { symbol: 'P', name: 'Fosfor' },
+            { symbol: 'S', name: 'Siarka' }, { symbol: 'Cl', name: 'Chlor' }, { symbol: 'Ar', name: 'Argon' },
+            { symbol: 'K', name: 'Potas' }, { symbol: 'Ca', name: 'Wapń' }, { symbol: 'Sc', name: 'Skand' },
+            { symbol: 'Ti', name: 'Tytan' }, { symbol: 'V', name: 'Wanad' }, { symbol: 'Cr', name: 'Chrom' },
+            { symbol: 'Mn', name: 'Mangan' }, { symbol: 'Fe', name: 'Żelazo' }, { symbol: 'Co', name: 'Kobalt' },
+            { symbol: 'Ni', name: 'Nikiel' }, { symbol: 'Cu', name: 'Miedź' }, { symbol: 'Zn', name: 'Cynk' },
+            { symbol: 'Ga', name: 'Gal' }, { symbol: 'Ge', name: 'German' }, { symbol: 'As', name: 'Arsen' },
+            { symbol: 'Se', name: 'Selen' }, { symbol: 'Br', name: 'Brom' }, { symbol: 'Kr', name: 'Krypton' },
+            { symbol: 'Rb', name: 'Rubid' }, { symbol: 'Sr', name: 'Stront' }, { symbol: 'Y', name: 'Itr' },
+            { symbol: 'Zr', name: 'Cyrkon' }, { symbol: 'Nb', name: 'Niob' }, { symbol: 'Mo', name: 'Molibden' },
+            { symbol: 'Tc', name: 'Technet' }, { symbol: 'Ru', name: 'Ruten' }, { symbol: 'Rh', name: 'Rod' },
+            { symbol: 'Pd', name: 'Pallad' }, { symbol: 'Ag', name: 'Srebro' }, { symbol: 'Cd', name: 'Kadm' }
+        ];
+
+        const questions = [
+            { question: 'Czy Słońce jest gwiazdą?', answer: 'Tak' },
+            { question: 'Czy wszystkie rośliny wytwarzają kwiaty?', answer: 'Nie' },
+            { question: 'Czy człowiek ma 206 kości w ciele?', answer: 'Tak' },
+            { question: 'Czy drzewa iglaste gubią liście na zimę?', answer: 'Nie' },
+            { question: 'Czy pszczoły są owadami?', answer: 'Tak' },
+            { question: 'Czy wulkan wybucha, gdy magma wypływa na powierzchnię?', answer: 'Tak' },
+            { question: 'Czy księżyc emituje własne światło?', answer: 'Nie' },
+            { question: 'Czy ryby oddychają powietrzem atmosferycznym?', answer: 'Nie' },
+            { question: 'Czy światło białe można rozdzielić na różne kolory?', answer: 'Tak' },
+            { question: 'Czy dźwięk może rozchodzić się w próżni?', answer: 'Nie' },
+            { question: 'Czy wszystkie reakcje chemiczne są odwracalne?', answer: 'Nie' },
+            { question: 'Czy sól kuchenna (NaCl) jest substancją organiczną?', answer: 'Nie' },
+            { question: 'Czy woda jest związkiem chemicznym?', answer: 'Tak' },
+            { question: 'Czy metale reagują z kwasami, wydzielając wodór?', answer: 'Tak' }
+        ];
+
+        function createPeriodicTable() {
+            const table = document.getElementById('periodic-table');
+            elements.forEach(element => {
+                const div = document.createElement('div');
+                div.classList.add('element');
+                div.innerHTML = `<span>${element.symbol}</span><br><small>${element.name}</small>`;
+                div.onclick = () => showQuestion(element);
+                table.appendChild(div);
+            });
+        }
+
+        function showQuestion(element) {
+            const questionData = questions[Math.floor(Math.random() * questions.length)];
+            document.getElementById('question-text').textContent = questionData.question;
+            document.getElementById('question-text').dataset.correctAnswer = questionData.answer;
+
+            // Resetowanie stanu przed wyświetleniem nowego pytania
+            const radioButtons = document.querySelectorAll('input[name="answer"]');
+            radioButtons.forEach(button => button.checked = false);
+
+            // Resetowanie feedbacku
+            document.getElementById('feedback').textContent = '';
+
+            // Włączanie możliwości wyboru odpowiedzi
+            radioButtons.forEach(button => button.disabled = false);
+
+            // Pokazanie okna z pytaniem
+            document.getElementById('question-modal').style.display = 'block';
+        }
+
+        function submitAnswer() {
+            const selectedAnswer = document.querySelector('input[name="answer"]:checked');
+            if (selectedAnswer) {
+                const correctAnswer = document.getElementById('question-text').dataset.correctAnswer;
+                const feedback = selectedAnswer.value === correctAnswer ? 'Odpowiedź prawidłowa!' : 'Odpowiedź nieprawidłowa!';
+                document.getElementById('feedback').textContent = feedback;
+
+                // Blokowanie odpowiedzi po wybraniu
+                const answerButtons = document.querySelectorAll('input[name="answer"]');
+                answerButtons.forEach(button => button.disabled = true);
+            } else {
+                document.getElementById('feedback').textContent = 'Proszę wybrać odpowiedź.';
+            }
+        }
+
+        function closeModal() {
+            document.getElementById('question-modal').style.display = 'none';
+        }
+
+        createPeriodicTable();
+    </script>
+</body>
+</html>
+
